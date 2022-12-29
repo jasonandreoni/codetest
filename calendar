@@ -1,0 +1,335 @@
+<?php 
+// hide divi buttons
+add_action('admin_head', 'my_custom_fonts');
+function my_custom_fonts() {
+  echo '<style>
+.et_pb_toggle_builder_wrapper.et_pb_builder_is_used a#et_pb_toggle_builder {
+   display: none !important;
+}
+.et_pb_toggle_builder_wrapper a#et_pb_fb_cta {
+   margin-left: 0 !important;
+}
+span.update-plugins {
+    display: none !important;
+}
+  </style>';
+}
+
+
+
+
+function zeno_font_resizer_place_shortcode() {
+	return zeno_font_resizer_place( false );
+}
+add_shortcode('zeno_font_resizer', 'zeno_font_resizer_place_shortcode');
+
+
+function wpb_remove_schedule_delete() {
+    remove_action( 'wp_scheduled_delete', 'wp_scheduled_delete' );
+}
+add_action( 'init', 'wpb_remove_schedule_delete' );
+
+
+add_filter( 'woocommerce_get_availability', 'custom_get_availability', 1, 2);
+function custom_get_availability( $availability, $_product ) {
+  global $product;
+  $stock = $product->get_total_stock();
+
+  if ( $_product->is_in_stock() ) $availability['availability'] = __($stock . ' Spots Available', 'woocommerce');
+  if ( !$_product->is_in_stock() ) $availability['availability'] = __('SOLD OUT', 'woocommerce');
+
+  return $availability;
+}
+
+
+
+add_filter( 'woocommerce_product_single_add_to_cart_text', 'woo_custom_cart_button_text' );    // 2.1 +
+function woo_custom_cart_button_text() {
+        return __( 'Continue Registration', 'woocommerce' );
+}
+
+add_filter( 'woocommerce_product_add_to_cart_text', 'woo_archive_custom_cart_button_text' );    // 2.1 +
+
+function woo_archive_custom_cart_button_text() {
+        return __( 'Continue Registration', 'woocommerce' );
+}
+
+
+add_filter( 'woocommerce_product_add_to_cart_text' , 'custom_woocommerce_product_add_to_cart_text' );
+/**
+ * custom_woocommerce_template_loop_add_to_cart
+*/
+function custom_woocommerce_product_add_to_cart_text() {
+	global $product;
+	
+	$product_type = $product->product_type;
+	
+	switch ( $product_type ) {
+		case 'external':
+			return __( 'Continue Registration', 'woocommerce' );
+		break;
+		case 'grouped':
+			return __( 'Continue Registration', 'woocommerce' );
+		break;
+		case 'simple':
+			return __( 'Continue Registration', 'woocommerce' );
+		break;
+		case 'variable':
+			return __( 'Continue Registration', 'woocommerce' );
+		break;
+		default:
+			return __( 'Continue Registration', 'woocommerce' );
+	}
+}
+
+
+
+
+add_action( 'after_setup_theme', function() {
+	remove_theme_support( 'wc-product-gallery-zoom' );
+}, 20 );
+
+add_action( 'after_setup_theme_box', function() {
+	remove_theme_support( 'wc-product-gallery-lightbox' );
+}, 20 );
+
+
+
+add_filter('woocommerce_get_price_html', 'changeFreePriceNotice', 10, 2);
+function changeFreePriceNotice($price, $product) {
+	error_log($price);
+	if ( $price == wc_price( 0.00 ) )
+		return 'FREE';
+	else
+		return $price;
+}
+
+
+
+
+/**
+ * Auto Complete all WooCommerce orders.
+ */
+add_action( 'woocommerce_thankyou', 'custom_woocommerce_auto_complete_order' );
+function custom_woocommerce_auto_complete_order( $order_id ) { 
+    if ( ! $order_id ) {
+        return;
+    }
+
+    $order = wc_get_order( $order_id );
+    $order->update_status( 'completed' );
+}
+
+
+// show module inside another module
+function showmodule_shortcode($moduleid) {
+	extract(shortcode_atts(array('id' =>'*'),$moduleid));
+	return do_shortcode('[et_pb_section global_module="'.$id.'"][/et_pb_section]');
+}
+add_shortcode('showmodule', 'showmodule_shortcode');
+
+
+
+// gravity forms : bounce back to form for missed required fields
+add_filter( 'gform_confirmation_anchor', '__return_true' );
+
+// gravity forms : force jQuery into footer
+add_filter("gform_init_scripts_footer", "init_scripts");
+function init_scripts() {
+	return true;
+}
+
+
+
+// add browser/device to body class
+function amp_isIpad() {
+	$amp_isIpad = (bool) strpos($_SERVER['HTTP_USER_AGENT'],'iPad');
+	if ($amp_isIpad)
+		return true;
+	else return false;
+}
+function amp_isiPhone() {
+	$cn_amp_isiPhone = (bool) strpos($_SERVER['HTTP_USER_AGENT'],'iPhone');
+	if ($cn_amp_isiPhone)
+		return true;
+	else return false;
+}
+function amp_isiOs() {
+	if (amp_isiPhone() || amp_isIpad())
+		return true;
+	else return false;
+}
+function amp_isAndroid() {
+	$amp_isAndroid = (bool) strpos($_SERVER['HTTP_USER_AGENT'],'Android');
+	if ($amp_isAndroid)
+		return true;
+	else return false;
+}
+function amp_isAndroid_mobile() {
+	$amp_isAndroid   = (bool) strpos($_SERVER['HTTP_USER_AGENT'],'Android');
+	$amp_isAndroid_m = (bool) strpos($_SERVER['HTTP_USER_AGENT'],'Mobile');
+	if ($amp_isAndroid && $amp_isAndroid_m)
+		return true;
+	else return false;
+}
+function amp_isAndroid_tablet() {
+	if (amp_isAndroid() && !amp_isAndroid_mobile())
+		return true;
+	else return false;
+}
+function amp_isMobileDevice() {
+	if (amp_isAndroid_mobile() || amp_isiPhone())
+		return true;
+	else return false;
+}
+function amp_isTablet() {
+	if ((amp_isAndroid() && !amp_isAndroid_mobile()) || amp_isIpad())
+		return true;
+	else return false;
+}
+add_filter('body_class', 'addUAClasses');
+function addUAClasses($classes) {
+	global $is_IE, $is_opera, $is_safari, $is_chrome, $is_edge, $is_gecko, $amp_isiPhone;
+	$userAgent = $_SERVER['HTTP_USER_AGENT'];
+	if(!wp_is_mobile()) {
+		if($is_opera) $classes[] = 'opera';
+		elseif($is_safari) $classes[] = 'safari';
+		elseif($is_chrome) $classes[] = 'chrome';
+		elseif($is_edge) $classes[] = 'edge';
+		elseif($is_gecko) $classes[] = 'firefox';
+		elseif($is_IE) {
+			$classes[] = 'ie';
+			if(preg_match('/MSIE ([0-9]+)([a-zA-Z0-9.]+)/', $userAgent, $browser_version))
+				$classes[] = 'ie-version-'.$browser_version[1];
+		}
+		else $classes[] = 'unknown';
+	}
+	else {
+		if(amp_isiPhone()) $classes[] = 'iphone';
+		elseif(amp_isIpad()) $classes[] = 'ipad';
+		elseif(amp_isAndroid()) $classes[] = 'android';
+		elseif(strpos($userAgent, 'Kindle') !== false) $classes[] = 'kindle';
+		elseif(strpos($userAgent, 'BlackBerry') !== false) $classes[] = 'blackberry';
+		elseif(strpos($userAgent, 'Opera Mini') !== false) $classes[] = 'opera-mini';
+		elseif(strpos($userAgent, 'Opera Mobi') !== false) $classes[] = 'opera-mobi';
+
+		if(amp_isTablet()) $classes[] = 'tablet';
+		if(amp_isMobileDevice()) $classes[] = 'mobile';
+	}
+	if(strpos($userAgent, 'Windows') !== false) $classes[] = 'windows';
+	elseif(amp_isAndroid()) $classes[] = 'android';
+	elseif(amp_isiOs()) $classes[] = 'ios';
+	elseif(strpos($userAgent, 'Macintosh') !== false) $classes[] = 'mac';
+	elseif(strpos($userAgent, 'Linux') !== false) $classes[] = 'linux';
+	elseif(strpos($userAgent, 'Kindle') !== false) $classes[] = 'kindle';
+	elseif(strpos($userAgent, 'BlackBerry') !== false) $classes[] = 'blackberry';
+	return $classes;
+}
+
+
+function disable_related_youtube_videos($content) {
+	return preg_replace(
+		'/('.
+			preg_quote('https://www.youtube.com/embed/', '/').
+			'[A-Za-z0-9]+'.
+			preg_quote('?feature=oembed', '/').
+		')/', 
+		'\\1&rel=0', 
+		$content
+	);
+}
+add_action('the_content', 'disable_related_youtube_videos', 100);
+
+
+  //Include the Purchaser phone number in the CSV headers
+  add_filter('tribe_events_tickets_attendees_csv_export_columns','add_phone_number_to_headers',10,1);
+  function add_phone_number_to_headers($columns){
+	$columns['phone_number'] = 'Purchaser phone number';
+	  return $columns;
+  }
+
+  //Add the phone number to each row
+  add_filter('tribe_events_tickets_attendees_table_column', 'add_phone_number_to_rows',10 ,3);
+  function add_phone_number_to_rows($value, $item, $column){
+	if ($column == 'phone_number'){
+		$phone_number = get_post_meta( $item['order_id'], '_billing_phone', true );
+		$value=$phone_number;
+	}
+	return $value;
+  }
+
+
+/**
+ * Adds event start date to ticket order titles in email and checkout screens.
+ *
+ * @return string
+ */
+function tribe_add_date_to_order_title( $title, $item ) {
+    $event = tribe_events_get_ticket_event( $item['product_id'] );
+ 
+    if ( $event !== false ) {
+        $title .= ' - ' . tribe_get_start_date( $event );
+    }
+ 
+    return $title;
+}
+ 
+add_filter( 'woocommerce_order_item_name', 'tribe_add_date_to_order_title', 100, 2 );
+
+
+// Adding an extra column header for Purchase time
+add_filter( 'tribe_tickets_attendee_table_columns', 'tec_et_purchase_time_column' );
+
+function tec_et_purchase_time_column( $columns ) {
+	/**
+	 * Choose below after which column you would like to add the purchase time
+	 * 'cb', 'ticket', 'primary_info', 'security', 'status', 'check_in'
+	 */
+	$insert_after_column = 'primary_info';
+
+	foreach ( $columns as $key => $value ) {
+		$new_columns[$key] = $value;
+		
+		if ( $key == $insert_after_column ) {
+			$new_columns['purchase_time'] = "Purchase time";
+		}
+	}
+
+	return $new_columns;
+}
+
+
+// Adding the values to the purchase time column
+add_filter( 'tribe_events_tickets_attendees_table_column', 'tec_et_purchase_time_column_data', 10, 3 );
+
+function tec_et_purchase_time_column_data( $value, $item, $column ) {
+	if ( $column == 'purchase_time' ) {
+		$ptime = strtotime( $item['purchase_time'] );
+
+		$ptime = date( get_option( 'date_format' ), $ptime ) .
+			' at ' .
+			date( get_option( 'time_format' ), $ptime );
+		$value = $ptime;
+	}
+	return $value;
+}
+
+
+
+/** Prevent RSVP Emails from sending **/ 
+add_filter( 'tribe_rsvp_email_recipient', '__return_empty_array' );
+
+
+
+add_filter( 'excerpt_length', 'tribe_excerpt_length' );
+function tribe_excerpt_length() {
+return '30';
+}
+
+
+
+function themeprefix_excerpt_read_more_link( $output ) {
+	global $post;
+	return $output . ' <a href="' . get_permalink( $post->ID ) . '" class="more-link" title="Read More">more info...</a>';
+}
+add_filter( 'the_excerpt', 'themeprefix_excerpt_read_more_link' );
